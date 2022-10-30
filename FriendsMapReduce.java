@@ -51,12 +51,14 @@ public class FriendsMapReduce extends Configured implements Tool {
     public static class FriendsMap extends Mapper<Text, Text, Text, FriendConnectionWritable> {
         @Override
         protected void map(Text key, Text value, Mapper<Text, Text, Text, FriendConnectionWritable>.Context context) throws IOException, InterruptedException {
-            Integer[] friendArray = Stream.of(value.toString().split(",")).map(Integer::valueOf).toArray(Integer[]::new);
-            for (int indexOfDirectFriend = 0; indexOfDirectFriend < friendArray.length; indexOfDirectFriend++) {
-                context.write(key, new FriendConnectionWritable(new IntWritable(friendArray[indexOfDirectFriend]), new BooleanWritable(true)));
-                for (int indexOfOtherDirectFriend = indexOfDirectFriend + 1; indexOfOtherDirectFriend < friendArray.length; indexOfOtherDirectFriend++) {
-                    context.write(new Text(friendArray[indexOfDirectFriend].toString()), new FriendConnectionWritable(new IntWritable(friendArray[indexOfOtherDirectFriend]), new BooleanWritable(false)));
-                    context.write(new Text(friendArray[indexOfOtherDirectFriend].toString()), new FriendConnectionWritable(new IntWritable(friendArray[indexOfDirectFriend]), new BooleanWritable(false)));
+            if (!value.toString().isEmpty()){
+                Integer[] friendArray = Stream.of(value.toString().split(",")).map(Integer::valueOf).toArray(Integer[]::new);
+                for (int indexOfDirectFriend = 0; indexOfDirectFriend < friendArray.length; indexOfDirectFriend++) {
+                    context.write(key, new FriendConnectionWritable(new IntWritable(friendArray[indexOfDirectFriend]), new BooleanWritable(true)));
+                    for (int indexOfOtherDirectFriend = indexOfDirectFriend + 1; indexOfOtherDirectFriend < friendArray.length; indexOfOtherDirectFriend++) {
+                        context.write(new Text(friendArray[indexOfDirectFriend].toString()), new FriendConnectionWritable(new IntWritable(friendArray[indexOfOtherDirectFriend]), new BooleanWritable(false)));
+                        context.write(new Text(friendArray[indexOfOtherDirectFriend].toString()), new FriendConnectionWritable(new IntWritable(friendArray[indexOfDirectFriend]), new BooleanWritable(false)));
+                    }
                 }
             }
         }
