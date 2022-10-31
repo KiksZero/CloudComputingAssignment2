@@ -14,3 +14,5 @@ source /home/ubuntu/.profile
 echo "export PATH=$HADOOP_HOME/bin:$PATH" >> /home/ubuntu/.profile
 echo "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64\nexport HADOOP_HOME=/usr/local/hadoop-3.3.4" >> /etc/hadoop/hadoop-env.sh
 echo "export HADOOP_CLASSPATH=$JAVA_HOME/lib/tools.jar" >> /home/ubuntu/.profile
+sudo apt install python3-pip -y
+pip install pyspark
