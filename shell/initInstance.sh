@@ -23,5 +23,4 @@ sudo apt install python3-pip -y
 pip install pyspark
 
 # clone our repo with all scripts, java files and data inputs
-cd ~
-git clone https://github.com/KiksZero/CloudComputingAssignment2.git
+git clone https://github.com/KiksZero/CloudComputingAssignment2.git /home/ubuntu/CloudComputingAssignment2
