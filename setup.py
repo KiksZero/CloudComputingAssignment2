@@ -10,7 +10,7 @@ ec2_client = boto3.client("ec2")
 ec2_resource = boto3.resource("ec2")
 elbv2_client = boto3.client('elbv2')
 
-with open('init_instance.sh', 'r') as file:
+with open('shell/init_instance.sh', 'r') as file:
     instance_init_script = file.read()
 
 instance = ec2_client.run_instances(
