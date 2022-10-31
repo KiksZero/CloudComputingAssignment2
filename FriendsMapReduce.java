@@ -22,7 +22,6 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-
 public class FriendsMapReduce extends Configured implements Tool {
 
     public static void main(String[] args) throws Exception {
@@ -67,15 +66,15 @@ public class FriendsMapReduce extends Configured implements Tool {
     public static class RecommendedFriendsReduce extends Reducer<Text, FriendConnectionWritable, Text, Text> {
         @Override
         protected void reduce(Text key, Iterable<FriendConnectionWritable> values, Reducer<Text, FriendConnectionWritable, Text, Text>.Context context) throws IOException, InterruptedException {
-            HashMap<IntWritable, Integer> friendOfFriendCounter = new HashMap<>();
-            HashSet<IntWritable> directFriends = new HashSet<>();
+            HashMap<Integer, Integer> friendOfFriendCounter = new HashMap<>();
+            HashSet<Integer> directFriends = new HashSet<>();
             for (FriendConnectionWritable fr : values) {
-                IntWritable connectionId = fr.getConnectionId();
+                Integer connectionId = fr.getConnectionId().get();
                 if (fr.isDirectFriend().get()) {
-                    directFriends.add(fr.getConnectionId());
+                    directFriends.add(connectionId);
                 } else {
                     if (friendOfFriendCounter.containsKey(connectionId)) {
-                        if (!directFriends.contains(fr.getConnectionId())) {
+                        if (!directFriends.contains(connectionId)) {
                             friendOfFriendCounter.put(connectionId, friendOfFriendCounter.get(connectionId) + 1);
                         }
                     } else {
@@ -84,14 +83,16 @@ public class FriendsMapReduce extends Configured implements Tool {
                 }
             }
 
-            List<Integer> sortedFriendOfFriendList = new ArrayList<Integer>(friendOfFriendCounter.values());
-            Collections.sort(sortedFriendOfFriendList);
-            sortedFriendOfFriendList = sortedFriendOfFriendList.subList(0, 9);
-
-            List<String> outputList = sortedFriendOfFriendList.stream().map(Object::toString)
+            LinkedHashMap<Integer, Integer> topTenFriendOfFriendCounter =
+                    friendOfFriendCounter.entrySet().stream()
+                            .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                            .limit(10)
+                            .collect(Collectors.toMap(
+                                    Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+            List<String> topTenFriendOfFriendIdList = topTenFriendOfFriendCounter.keySet().stream().map(Object::toString)
                     .collect(Collectors.toList());
 
-            context.write(key, new Text(String.join(",", outputList)));
+            context.write(key, new Text(String.join(",", topTenFriendOfFriendIdList)));
         }
     }
 
@@ -130,7 +131,6 @@ public class FriendsMapReduce extends Configured implements Tool {
             this.connectionId.write(dataOutput);
             this.directFriend.write(dataOutput);
         }
-
-
     }
 }
+
