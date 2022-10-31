@@ -66,7 +66,7 @@ public class FriendsMapReduce extends Configured implements Tool {
     public static class RecommendedFriendsReduce extends Reducer<Text, FriendConnectionWritable, Text, Text> {
         @Override
         protected void reduce(Text key, Iterable<FriendConnectionWritable> values, Reducer<Text, FriendConnectionWritable, Text, Text>.Context context) throws IOException, InterruptedException {
-            HashMap<Integer, Integer> friendOfFriendCounter = new HashMap<>();
+            TreeMap<Integer, Integer> friendOfFriendCounter = new TreeMap<>();
             HashSet<Integer> directFriends = new HashSet<>();
             for (FriendConnectionWritable fr : values) {
                 Integer connectionId = fr.getConnectionId().get();
