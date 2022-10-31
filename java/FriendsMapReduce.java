@@ -24,11 +24,12 @@ import org.apache.hadoop.util.ToolRunner;
 
 public class FriendsMapReduce extends Configured implements Tool {
 
+    //Creating main class that lets a new configuration run
     public static void main(String[] args) throws Exception {
         ToolRunner.run(new Configuration(), new FriendsMapReduce(), args);
     }
 
-
+    //set-up all the necessary classes to run mapReduce for our job
     @Override
     public int run(String[] args) throws Exception {
         Job friendJob = Job.getInstance(getConf(), "Friend map reduce JOB");
@@ -46,14 +47,18 @@ public class FriendsMapReduce extends Configured implements Tool {
 
         return 0;
     }
-
+    //Create a mapper that uses our writeable method
     public static class FriendsMap extends Mapper<Text, Text, Text, FriendConnectionWritable> {
         @Override
         protected void map(Text key, Text value, Mapper<Text, Text, Text, FriendConnectionWritable>.Context context) throws IOException, InterruptedException {
+            //Do not run for users that have no friends
             if (!value.toString().isEmpty()) {
+                //Create an array that splits the friendslist of each user into integers
                 Integer[] friendArray = Stream.of(value.toString().split(",")).map(Integer::valueOf).toArray(Integer[]::new);
+                //For each combination of user and friend in friendlist change the boolean directFriend to True
                 for (int indexOfDirectFriend = 0; indexOfDirectFriend < friendArray.length; indexOfDirectFriend++) {
                     context.write(key, new FriendConnectionWritable(new IntWritable(friendArray[indexOfDirectFriend]), new BooleanWritable(true)));
+                    //For all friends of friends and the user create the combination both ways and and change the boolean directFriend to False
                     for (int indexOfOtherDirectFriend = indexOfDirectFriend + 1; indexOfOtherDirectFriend < friendArray.length; indexOfOtherDirectFriend++) {
                         context.write(new Text(friendArray[indexOfDirectFriend].toString()), new FriendConnectionWritable(new IntWritable(friendArray[indexOfOtherDirectFriend]), new BooleanWritable(false)));
                         context.write(new Text(friendArray[indexOfOtherDirectFriend].toString()), new FriendConnectionWritable(new IntWritable(friendArray[indexOfDirectFriend]), new BooleanWritable(false)));
@@ -63,26 +68,32 @@ public class FriendsMapReduce extends Configured implements Tool {
         }
     }
 
+    //Create reducer for the FriendConnectionWritable
     public static class RecommendedFriendsReduce extends Reducer<Text, FriendConnectionWritable, Text, Text> {
+        //Use the reducer to iterate over all data made in the mapper
         @Override
         protected void reduce(Text key, Iterable<FriendConnectionWritable> values, Reducer<Text, FriendConnectionWritable, Text, Text>.Context context) throws IOException, InterruptedException {
             TreeMap<Integer, Integer> friendOfFriendCounter = new TreeMap<>();
             HashSet<Integer> directFriends = new HashSet<>();
             for (FriendConnectionWritable fr : values) {
                 Integer connectionId = fr.getConnectionId().get();
+                //Add all the people that are direct friends of a user to a the direct friends hashset
                 if (fr.isDirectFriend().get()) {
                     directFriends.add(connectionId);
+                //If the person is not a direct friend but does have a key, add 1 to the friendscounter in treemap
                 } else {
                     if (friendOfFriendCounter.containsKey(connectionId)) {
                         if (!directFriends.contains(connectionId)) {
                             friendOfFriendCounter.put(connectionId, friendOfFriendCounter.get(connectionId) + 1);
                         }
+                    //If the person is not a direct friend and does NOT have a key, create treemap and put the value to 1
                     } else {
                         friendOfFriendCounter.put(connectionId, 1);
                     }
                 }
             }
-
+            
+            //For each user, sort the array and remove all but the top 10 recommendations after sorting
             LinkedHashMap<Integer, Integer> topTenFriendOfFriendCounter =
                     friendOfFriendCounter.entrySet().stream()
                             .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -96,6 +107,7 @@ public class FriendsMapReduce extends Configured implements Tool {
         }
     }
 
+    //Custom Writable object for hadoop
     public static class FriendConnectionWritable implements Writable {
 
         private final IntWritable connectionId;
@@ -133,4 +145,3 @@ public class FriendsMapReduce extends Configured implements Tool {
         }
     }
 }
-
