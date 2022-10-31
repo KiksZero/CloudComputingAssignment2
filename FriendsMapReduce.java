@@ -32,7 +32,7 @@ public class FriendsMapReduce extends Configured implements Tool {
 
     @Override
     public int run(String[] args) throws Exception {
-        Job friendJob = new Job(getConf(), "Friend map reduce JOB");
+        Job friendJob = Job.getInstance(getConf(), "Friend map reduce JOB");
         friendJob.setJarByClass(FriendsMapReduce.class);
         friendJob.setMapOutputKeyClass(Text.class);
         friendJob.setMapOutputValueClass(FriendConnectionWritable.class);
@@ -51,7 +51,7 @@ public class FriendsMapReduce extends Configured implements Tool {
     public static class FriendsMap extends Mapper<Text, Text, Text, FriendConnectionWritable> {
         @Override
         protected void map(Text key, Text value, Mapper<Text, Text, Text, FriendConnectionWritable>.Context context) throws IOException, InterruptedException {
-            if (!value.toString().isEmpty()){
+            if (!value.toString().isEmpty()) {
                 Integer[] friendArray = Stream.of(value.toString().split(",")).map(Integer::valueOf).toArray(Integer[]::new);
                 for (int indexOfDirectFriend = 0; indexOfDirectFriend < friendArray.length; indexOfDirectFriend++) {
                     context.write(key, new FriendConnectionWritable(new IntWritable(friendArray[indexOfDirectFriend]), new BooleanWritable(true)));
@@ -109,6 +109,11 @@ public class FriendsMapReduce extends Configured implements Tool {
 
         private final BooleanWritable directFriend;
 
+        public FriendConnectionWritable() {
+            this.connectionId = new IntWritable();
+            this.directFriend = new BooleanWritable();
+        }
+
         public FriendConnectionWritable(IntWritable connectionId, BooleanWritable directFriend) {
             this.connectionId = connectionId;
             this.directFriend = directFriend;
@@ -129,5 +134,3 @@ public class FriendsMapReduce extends Configured implements Tool {
 
     }
 }
-
-
