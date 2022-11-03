@@ -71,7 +71,9 @@ public class FriendsMapReduce extends Configured implements Tool {
     public static class FriendsMap extends Mapper<Text, Text, Text, FriendConnectionWritable> {
 
         /**
-         * Main map method (mapping direct and possible second degree friends)
+         * Main map method (mapping direct and possible second degree friends).
+         * friendArray keeps the direct and second degree friends of every user with a boolean
+         * (true -> direct, false -> second degree)
          *
          * @param key
          * @param value
@@ -107,6 +109,11 @@ public class FriendsMapReduce extends Configured implements Tool {
 
         /**
          * Main reduce method
+         * every tuple in friendArray is analysed. If the friend is direct, it is added to directFriends set;
+         * if the friend is second degree, it is added to friendOfFriendCounter map. If it has already been added,
+         * the counter increments by one, otherwise a tuple is created with counter = 1.
+         * in the end we sort friendOfFriendCounter and get the 10 second degree friends with the highest value in
+         * counter.
          *
          * @param key
          * @param values
